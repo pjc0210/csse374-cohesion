@@ -78,6 +78,7 @@ gradle-app.setting
 # IntelliJ
 .idea/
 /out/
+target/
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
