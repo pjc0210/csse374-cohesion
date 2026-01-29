@@ -20,3 +20,4 @@ java -cp target/LinterProject-1.0-rc3-jar-with-dependencies.jar example.MyFirstL
 
 - Rishi - Test commit
 - Mason - Test commit
+- PJ - Test commit
