@@ -16,3 +16,6 @@ java -cp target/LinterProject-1.0-rc3-jar-with-dependencies.jar example.MyFirstL
 Or like this if you wanna analyze your own local files (which you'll probably want to do to write test cases)
 
 java -cp target/LinterProject-1.0-rc3-jar-with-dependencies.jar example.MyFirstLinter example.MyFirstLinter
+
+
+- Rishi - Test commit
