@@ -1,0 +1,10 @@
+@startuml
+class MyFirstLinter {
+    fieldForAnalysisByThisProgram: String[]
+    + {static} main(args: String[]): void
+    - {static} printClass(classNode: ClassNode): void
+    - {static} printFields(classNode: ClassNode): void
+    - {static} printMethods(classNode: ClassNode): void
+    - {static} printInstructions(methodNode: MethodNode): void
+}
+@enduml
