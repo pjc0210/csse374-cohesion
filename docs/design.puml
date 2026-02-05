@@ -1,10 +1,227 @@
 @startuml
-class MyFirstLinter {
-    fieldForAnalysisByThisProgram: String[]
-    + {static} main(args: String[]): void
-    - {static} printClass(classNode: ClassNode): void
-    - {static} printFields(classNode: ClassNode): void
-    - {static} printMethods(classNode: ClassNode): void
-    - {static} printInstructions(methodNode: MethodNode): void
+
+' ============================================================================
+' DOMAIN LAYER
+' ============================================================================
+package Domain {
+    class MyFirstLinter {
+      + {static} fieldForAnalysisByThisProgram: String[]
+      + {static} main(args: String[]): void
+      - {static} printClass(classNode: ClassNode): void
+      - {static} printFields(classNode: ClassNode): void
+      - {static} printMethods(classNode: ClassNode): void
+      - {static} printInstructions(methodNode: MethodNode): void
+    }
+
+    ' ============================================================================
+    ' PATTERN CHECKS (A)
+    ' ============================================================================
+
+    interface IPatternCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class DecoratorPatternCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class RedundantInterfaceCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class StrategyPatternCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class ThreeLayerPatternCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    ' ============================================================================
+    ' PRINCIPLE CHECKS (B)
+    ' ============================================================================
+
+    interface IPrincipleCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class OpenClosedCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class HollywoodPrincipleCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class CodeDuplicationCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class EncapsulationCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    ' ============================================================================
+    ' STYLE CHECKS (C)
+    ' ============================================================================
+
+    interface IStyleCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class GlobalVariableCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class CamelCaseCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class UnusedVariablesCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class SpellCheckingCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class MissingAbstractImplCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class UnusedParametersCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class DataTypeCompatibilityCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    class SwallowedExceptionCheck {
+      + execute(classNode: ClassNode): List<LintResult>
+      + getName(): String
+    }
+
+    ' ============================================================================
+    ' RESULTS
+    ' ============================================================================
+
+    class LintResult {
+      - checkName: String
+      - category: Category
+      - location: String
+      - message: String
+      + toString(): String
+    }
+
+    enum Category {
+      PATTERN_VIOLATION
+      PRINCIPLE_VIOLATION
+      STYLE_VIOLATION
+    }
+
+    ' ===========================================================================
+    ' NOTES
+    ' ===========================================================================
+    note right of IPatternCheck
+    <b>Pattern Detection (A)</b>
+      Mason: Decorator Pattern
+      Rishi: Redundant Interface
+      PJ: Strategy Pattern
+      Sandya: Three Layer Pattern
+    end note
+
+    note right of IPrincipleCheck
+    <b>Principle Violation (B)</b>
+      Mason: Open/Closed
+      Rishi: Hollywood Principle
+      PJ: Code Duplication
+      Sandya: Encapsulation
+    end note
+
+    note right of IStyleCheck
+    <b>Style Checks (C)</b>
+      Mason: Global Variables
+      Rishi: Camel Case
+      PJ: Unused Variables
+      Sandya: Spell Checking
+
+    <b>Advanced Checks (4)</b>
+      Mason: Missing Abstract Impl
+      Rishi: Unused Parameters
+      PJ: Data Type Compatibility
+      Sandya: Swallowed Exception
+    end note
 }
+
+
+' ============================================================================
+' RELATIONSHIPS
+' ============================================================================
+MyFirstLinter --> IPatternCheck
+MyFirstLinter --> IPrincipleCheck
+MyFirstLinter --> IStyleCheck
+
+DecoratorPatternCheck ..|> IPatternCheck
+RedundantInterfaceCheck ..|> IPatternCheck
+StrategyPatternCheck ..|> IPatternCheck
+ThreeLayerPatternCheck ..|> IPatternCheck
+
+OpenClosedCheck ..|> IPrincipleCheck
+HollywoodPrincipleCheck ..|> IPrincipleCheck
+CodeDuplicationCheck ..|> IPrincipleCheck
+EncapsulationCheck ..|> IPrincipleCheck
+
+GlobalVariableCheck ..|> IStyleCheck
+CamelCaseCheck ..|> IStyleCheck
+UnusedVariablesCheck ..|> IStyleCheck
+SpellCheckingCheck ..|> IStyleCheck
+
+MissingAbstractImplCheck ..|> IStyleCheck
+UnusedParametersCheck ..|> IStyleCheck
+DataTypeCompatibilityCheck ..|> IStyleCheck
+SwallowedExceptionCheck ..|> IStyleCheck
+
+LintResult -r-> Category
+IPatternCheck .u.> LintResult
+IPrincipleCheck .u.> LintResult
+IStyleCheck .u.> LintResult
+
+' ============================================================================
+' LAYOUT HINTS
+' ============================================================================
+
+IPatternCheck -[hidden]down- DecoratorPatternCheck
+IPatternCheck -[hidden]down- RedundantInterfaceCheck
+IPatternCheck -[hidden]down- StrategyPatternCheck
+IPatternCheck -[hidden]down- ThreeLayerPatternCheck
+
+IPrincipleCheck -[hidden]down- OpenClosedCheck
+IPrincipleCheck -[hidden]down- HollywoodPrincipleCheck
+IPrincipleCheck -[hidden]down- CodeDuplicationCheck
+IPrincipleCheck -[hidden]down- EncapsulationCheck
+
+IStyleCheck -[hidden]down- GlobalVariableCheck
+IStyleCheck -[hidden]down- CamelCaseCheck
+IStyleCheck -[hidden]down- UnusedVariablesCheck
+IStyleCheck -[hidden]down- SpellCheckingCheck
+
 @enduml
