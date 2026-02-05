@@ -1,0 +1,220 @@
+1) Strategy Pattern
+
+strategyPatterns = []
+
+for each interface/abstract class I:
+    if I.getMethods().size() <= 3:  // Strategy interfaces are usually small
+        implementations = findAllImplementations(I)
+
+        if implementations.size() >= 2:  // Need multiple strategies
+            contexts = findContextClasses(I)
+
+            if contexts.size() >= 1:
+                strategyPatterns.add({
+                    strategyInterface: I,
+                    concreteStrategies: implementations,
+                    contexts: contexts
+                })
+
+function findContextClasses(strategyInterface):
+    contexts = []
+
+    for each class C:
+        fields = C.getFields()
+
+        for each field F in fields:
+            if F.type == strategyInterface:
+                // Check if field is used (delegated to)
+                if methodCallsStrategyMethod(C, F):
+                    // Check if strategy is injected
+                    if hasSetterOrConstructorFor(C, F):
+                        contexts.add(C)
+
+    return contexts
+
+function methodCallsStrategyMethod(contextClass, strategyField):
+    for each method M in contextClass.methods:
+        instructions = M.getInstructions()
+        for each instruction in instructions:
+            if instruction.isMethodCall():
+                if instruction.owner == strategyField.name:
+                    return true
+    return false
+
+function hasSetterOrConstructorFor(contextClass, field):
+    // Check constructor
+    for each constructor in contextClass.constructors:
+        if constructor.hasParameter(field.type):
+            return true
+
+    // Check setters
+    for each method M in contextClass.methods:
+        if M.name.startsWith("set") and M.hasParameter(field.type):
+            return true
+
+    return false
+
+
+  2) Code Duplication
+
+  duplicates = []
+  MIN_BLOCK_SIZE = 6  // minimum lines/tokens to consider
+  SIMILARITY_THRESHOLD = 0.85  // 85% similar = duplicate
+
+  for each class C:
+      for each method M in C.methods:
+          tokens = tokenizeMethod(M)
+
+          // Compare with all other methods
+          for each other class C2:
+              for each other method M2 in C2.methods:
+                  if M == M2:
+                      continue  // skip self
+
+                  tokens2 = tokenizeMethod(M2)
+
+                  if tokens.size() < MIN_BLOCK_SIZE:
+                      continue
+
+                  similarity = calculateSimilarity(tokens, tokens2)
+
+                  if similarity >= SIMILARITY_THRESHOLD:
+                      duplicates.add({
+                          method1: M,
+                          method2: M2,
+                          similarity: similarity
+                      })
+
+  report duplicates
+
+  function tokenizeMethod(method):
+      tokens = []
+      instructions = method.getInstructions()
+
+      for each instruction in instructions:
+          // Get opcode (the operation type)
+          token = instruction.getOpcode()
+          tokens.add(token)
+
+          // Optionally include method calls
+          if instruction.isMethodCall():
+              tokens.add("CALL_" + instruction.getMethodName())
+
+      return tokens
+
+ 3) Unused Variables
+
+ function checkUnusedVariables(AST):
+     traverse(AST, globalScope)
+
+     for each scope in declaredVars:
+         unused = declaredVars[scope] − usedVars[scope]
+         for each var in unused:
+             reportWarning(var, "Variable declared but never used")
+
+function traverse(node, currentScope):
+
+    if node opens a new scope:
+        newScope = createChildScope(currentScope)
+    else:
+        newScope = currentScope
+
+    if node is VariableDeclaration:
+        declaredVars[newScope].add(node.variableName)
+
+    if node is VariableRead:
+        markUsed(node.variableName, newScope)
+
+    if node is Assignment:
+        traverse(node.rightHandSide, newScope)
+
+    for each child in node.children:
+        traverse(child, newScope)
+
+function markUsed(variableName, scope):
+    while scope is not null:
+        if variableName exists in declaredVars[scope]:
+            usedVars[scope].add(variableName)
+            return
+        scope = scope.parent
+
+4) Data Type Compatibility
+
+function checkTypeCompatibility(AST):
+    traverse(AST, globalScope)
+
+function traverse(node, currentScope):
+
+    if node opens new scope:
+        newScope = createChildScope(currentScope)
+    else:
+        newScope = currentScope
+
+    if node is VariableDeclaration:
+        symbolTable[newScope][node.variableName] = node.declaredType
+
+        if node.initializer exists:
+            initType = inferType(node.initializer, newScope)
+            if not isCompatible(node.declaredType, initType):
+                reportError(node,
+                    "Type mismatch: cannot assign " + initType + " to " + node.declaredType)
+
+    if node is Assignment:
+        targetType = lookupType(node.variableName, newScope)
+        valueType  = inferType(node.expression, newScope)
+
+        if not isCompatible(targetType, valueType):
+            reportError(node,
+                "Type mismatch: cannot assign " + valueType + " to " + targetType)
+
+    if node is BinaryExpression:
+        leftType  = inferType(node.left, newScope)
+        rightType = inferType(node.right, newScope)
+
+        if not isOperatorCompatible(node.operator, leftType, rightType):
+            reportError(node,
+                "Invalid operation: " + leftType + " " + node.operator + " " + rightType)
+
+    for each child in node.children:
+        traverse(child, newScope)
+
+function inferType(expression, scope):
+
+    if expression is Literal:
+        return literalType(expression)
+
+    if expression is VariableReference:
+        return lookupType(expression.variableName, scope)
+
+    if expression is BinaryExpression:
+        left  = inferType(expression.left, scope)
+        right = inferType(expression.right, scope)
+        return resultType(expression.operator, left, right)
+
+    if expression is MethodCall:
+        return methodReturnType(expression.methodName)
+
+function isCompatible(targetType, valueType):
+
+    if targetType == valueType:
+        return true
+
+    if valueType can be safely widened to targetType:
+        return true
+
+    return false
+
+function isOperatorCompatible(operator, leftType, rightType):
+
+    if operator in {+, -, *, /}:
+        return leftType and rightType are numeric
+
+    if operator in {&&, ||}:
+        return leftType == boolean and rightType == boolean
+
+    if operator in {==, !=}:
+        return leftType == rightType
+
+    return false
+
+
