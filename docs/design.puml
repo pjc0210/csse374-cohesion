@@ -37,6 +37,11 @@ package Domain {
       - {static} printInstructions(methodNode: MethodNode): void
     }
 
+    interface ICheck {
+      + execute(classNode: ClassNode): List<LintResult>}
+      + getName(): String
+    }
+
     ' ============================================================================
     ' PATTERN CHECKS (A)
     ' ============================================================================
@@ -119,7 +124,7 @@ package Domain {
       + getName(): String
     }
 
-    class SpellCheckingCheck {
+    class SpellCheck {
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
     }
@@ -186,7 +191,7 @@ package Domain {
       Mason: Global Variables
       Rishi: Camel Case
       PJ: Unused Variables
-      Sandya: Spell Checking
+      Sandya: Spell Check
 
     <b>Advanced Checks (4)</b>
       Mason: Missing Abstract Impl
@@ -200,9 +205,14 @@ package Domain {
 ' ============================================================================
 ' RELATIONSHIPS
 ' ============================================================================
-Linter --> IPatternCheck
-Linter --> IPrincipleCheck
-Linter --> IStyleCheck
+Linter -->"*" ICheck
+
+IPatternCheck -u-|> ICheck
+IPrincipleCheck -u-|> ICheck
+IStyleCheck -u-|> ICheck
+
+LintResult -r-> Category
+ICheck .r.> LintResult
 
 DecoratorPatternCheck ..|> IPatternCheck
 RedundantInterfaceCheck ..|> IPatternCheck
@@ -217,17 +227,12 @@ EncapsulationCheck ..|> IPrincipleCheck
 GlobalVariableCheck ..|> IStyleCheck
 CamelCaseCheck ..|> IStyleCheck
 UnusedVariablesCheck ..|> IStyleCheck
-SpellCheckingCheck ..|> IStyleCheck
+SpellCheck ..|> IStyleCheck
 
 MissingAbstractImplCheck ..|> IStyleCheck
 UnusedParametersCheck ..|> IStyleCheck
 DataTypeCompatibilityCheck ..|> IStyleCheck
 SwallowedExceptionCheck ..|> IStyleCheck
-
-LintResult -r-> Category
-IPatternCheck .u.> LintResult
-IPrincipleCheck .u.> LintResult
-IStyleCheck .u.> LintResult
 
 ' ============================================================================
 ' LAYOUT HINTS
@@ -246,6 +251,6 @@ IPrincipleCheck -[hidden]down- EncapsulationCheck
 IStyleCheck -[hidden]down- GlobalVariableCheck
 IStyleCheck -[hidden]down- CamelCaseCheck
 IStyleCheck -[hidden]down- UnusedVariablesCheck
-IStyleCheck -[hidden]down- SpellCheckingCheck
+IStyleCheck -[hidden]down- SpellCheck
 
 @enduml
