@@ -163,6 +163,7 @@ function traverse(node, currentScope):
         targetType = lookupType(node.variableName, newScope)
         valueType  = inferType(node.expression, newScope)
 
+
         if not isCompatible(targetType, valueType):
             reportError(node,
                 "Type mismatch: cannot assign " + valueType + " to " + targetType)
