@@ -1,0 +1,125 @@
+# 1. Redundant Interface
+
+for each class C:
+    directInterfaces = C.getDirectlyImplementedInterfaces()
+
+    for each interface I in directInterfaces:
+        inheritedFromI = getAllParentInterfaces(I)
+
+        for each interface J in directInterfaces:
+            if I != J and I is in inheritedFromI:
+                report "Redundant: Class " + C +
+                       " implements " + I +
+                       " but already gets it from " + J
+
+
+#2. Hollywood Principle
+
+for each class C:
+    layerC = determineLayer(C)
+    dependencies = getAllDependencies(C)  // classes C uses
+
+    for each dependency D in dependencies:
+        layerD = determineLayer(D)
+
+        if layerC > layerD:  // lower layer calling higher layer
+            report "Hollywood Principle Violation: " +
+                   "Lower-level class " + C + " (layer " + layerC + ") " +
+                   "calls higher-level class " + D + " (layer " + layerD + ")"
+
+function determineLayer(class C):
+    package = C.getPackageName()
+
+    if package contains "ui" or "view" or "controller":
+        return LAYER_HIGH (3)
+    else if package contains "service" or "business":
+        return LAYER_MID (2)
+    else if package contains "model" or "data" or "dao":
+        return LAYER_LOW (1)
+    else:
+        return LAYER_UNKNOWN (2)  // default to middle
+
+# 3. Camel Case
+
+for each class C:
+    if not isPascalCase(C.name):
+        report "Class name violation: " + C.name + " should be PascalCase"
+
+    for each method M in C.methods:
+        if M.isConstant() and not isUpperSnakeCase(M.name):
+            report "Constant violation: " + M.name + " should be UPPER_SNAKE_CASE"
+        else if not M.isConstant() and not isCamelCase(M.name):
+            report "Method name violation: " + M.name + " should be camelCase"
+
+    for each field F in C.fields:
+        if F.isConstant() and not isUpperSnakeCase(F.name):
+            report "Constant violation: " + F.name + " should be UPPER_SNAKE_CASE"
+        else if not F.isConstant() and not isCamelCase(F.name):
+            report "Field name violation: " + F.name + " should be camelCase"
+
+
+function isPascalCase(name):
+    if name.isEmpty():
+        return false
+    if not isUpperCase(name[0]):
+        return false
+    if contains(name, '_') or contains(name, '-') or contains(name, ' '):
+        return false
+    if name.isAllUpperCase() or name.isAllLowerCase():
+        return false
+    return true
+
+function isCamelCase(name):
+    if name.isEmpty():
+        return false
+    if not isLowerCase(name[0]):
+        return false
+    if contains(name, '_') or contains(name, '-') or contains(name, ' '):
+        return false
+    if name.isAllUpperCase():
+        return false
+    return true
+
+function isUpperSnakeCase(name):
+    if name.isEmpty():
+        return false
+    if not name.matches("^[A-Z][A-Z0-9_]*$"):
+        return false
+    return true
+
+function isConstant(field or method):
+    return field.isFinal() and field.isStatic()
+
+
+#4. Unused Parameters
+
+for each class C:
+    for each method M in C.methods:
+        parameters = M.getParameters()
+
+        if parameters.isEmpty():
+            continue  // nothing to check
+
+        usedVariables = findAllVariableReferences(M.getMethodBody())
+
+        for each param in parameters:
+            if param.name not in usedVariables:
+                report "Unused parameter: '" + param.name +
+                       "' in method " + C.name + "." + M.name + "()"
+
+function findAllVariableReferences(methodNode):
+    usedVariables = new Set()
+
+    for each instruction in methodNode.instructions:
+        if instruction is ALOAD or ILOAD or FLOAD or DLOAD or LLOAD:
+            // Loading a local variable
+            variableIndex = instruction.var
+            variableName = getLocalVariableName(methodNode, variableIndex)
+            usedVariables.add(variableName)
+
+        if instruction is GETFIELD:
+            // Also captures field access like this.field
+            fieldName = instruction.name
+            usedVariables.add(fieldName)
+
+    return usedVariables
