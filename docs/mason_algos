@@ -1,0 +1,46 @@
+Mason's Amazing Algos
+
+(A)
+Goal: Identifying poor decorator patterns
+for class in package
+    methods = class.methods()
+    for m in methods
+        if m.isDecorator
+            if m.parameter.isNotUsed()
+                return false
+
+(B)
+Goal: Identifying invalid equals or hashcode override
+
+for class in package
+    methods = class.methods
+    for m in methods
+        if m.override and m.equals or m.hashcode
+            if !m.contains(m.equals and m.hashcode)
+                return false
+            if both m.equals xor m.hashcode override
+                return false
+
+(C)
+Goal: Identifying poor Global Variable placement/style
+
+for class in package
+    variables = class.variables
+    for v in variables
+        if v.isGlobal
+            if v.InMethod()
+                 if v.isNotCaps()
+                    return false
+              return false
+     return true
+
+(4)
+Goal: Identify instances of missing implementations of abstract methods
+
+for class in package
+    if class extends
+        necessary_methods = getAbstractMethods(class.extends)
+        for method in necessary_methods
+            if !class.methods.contains(method)
+                return false
+         return true
