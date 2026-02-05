@@ -157,9 +157,9 @@ package Domain {
     }
 
     enum Category {
-      PATTERN_VIOLATION
-      PRINCIPLE_VIOLATION
-      STYLE_VIOLATION
+      PATTERN
+      PRINCIPLE
+      STYLE
     }
 
     ' ===========================================================================
@@ -174,7 +174,7 @@ package Domain {
     end note
 
     note right of IPrincipleCheck
-    <b>Principle Violation (B)</b>
+    <b>Principle  (B)</b>
       Mason: Open/Closed
       Rishi: Hollywood Principle
       PJ: Code Duplication
