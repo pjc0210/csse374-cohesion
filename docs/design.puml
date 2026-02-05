@@ -1,11 +1,35 @@
 @startuml
 
 ' ============================================================================
+' PRESENTAION LAYER
+' ============================================================================
+
+package Presentation {
+    class LinterUI extends JFrame{
+      - frame: JFrame
+
+      + main(args: String[]): void
+    }
+}
+
+' ============================================================================
 ' DOMAIN LAYER
 ' ============================================================================
 package Domain {
-    class MyFirstLinter {
+    class LinterManager {
+        - allPatterns: List<IPatternCheck>
+        - allPrinciples: List<IPrincipleCheck>
+        - allStyles: List<IStyleCheck>
+
+
+    }
+
+    class Linter {
       + {static} fieldForAnalysisByThisProgram: String[]
+      - appliedPatterns: List<IPatternCheck>
+      - appliedPrinciples: List<IPrincipleCheck>
+      - appliedStyles: List<IStyleCheck>
+      
       + {static} main(args: String[]): void
       - {static} printClass(classNode: ClassNode): void
       - {static} printFields(classNode: ClassNode): void
@@ -176,9 +200,9 @@ package Domain {
 ' ============================================================================
 ' RELATIONSHIPS
 ' ============================================================================
-MyFirstLinter --> IPatternCheck
-MyFirstLinter --> IPrincipleCheck
-MyFirstLinter --> IStyleCheck
+Linter --> IPatternCheck
+Linter --> IPrincipleCheck
+Linter --> IStyleCheck
 
 DecoratorPatternCheck ..|> IPatternCheck
 RedundantInterfaceCheck ..|> IPatternCheck
