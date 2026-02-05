@@ -1,0 +1,45 @@
+Sandya's adhesive algorithms
+
+(A)
+Goal: Identifying poor Three Layer patterns
+for c in PresentationPackage or Input
+    if c.containsTooMuchLogic
+        return false
+
+ for c in DomainPackage
+    if c.containsInput or Output
+        return false
+ for c in DataPackage
+    if c.containsLogic or Output
+        return false
+
+(B)
+Goal: Identifying poor encapsulation
+
+
+(C)
+Goal: Identifying misspelled words
+
+for class in package
+    methods = class.methods()
+    variables = class.variables()
+    for m in methods
+        for word in m
+            if !dict.contains(word)
+                return false
+    for v in variables
+        for word in v
+            if !dict.contains(word)
+                return false
+
+
+(4)
+Goal: Identify instances of missing implementations of abstract methods
+
+for class in package
+    methods = class.methods()
+    for m in methods
+        if m.HasException
+            if m.catch < 2 lines
+                return false
+
