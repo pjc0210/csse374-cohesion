@@ -16,4 +16,8 @@ public class LintResult {
     public String toString() {
         return String.format("[%s] %s at %s: %s", category.name(), checkName, location, message);
     }
+
+    public String getMessage(){
+        return message;
+    }
 }

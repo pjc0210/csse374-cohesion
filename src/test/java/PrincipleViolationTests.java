@@ -36,7 +36,8 @@ public class PrincipleViolationTests {
 
         List<LintResult> results = ec.execute(classNode);
 //        System.out.println(results);
-        assertEquals(1, results.size(), "help");
+        assertEquals(1, results.size(), "Only one field isn't private or static");
+        assertTrue(results.get(0).getMessage().contains("checkName"), "checkName is public");
     }
     
 
