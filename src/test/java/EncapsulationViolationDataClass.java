@@ -3,7 +3,7 @@ import Domain.Category;
 public class EncapsulationViolationDataClass {
 
     public final String checkName;
-    private final Category category;
+    public static Category category;
     private final String location;
     private final String message; // might not be needed
 
