@@ -6,8 +6,10 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
+import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.*;
 
 // FIXME: this code has TERRIBLE DESIGN all around
 public class LinterManager {
@@ -27,7 +29,34 @@ public class LinterManager {
         // TODO: Learn how to create separate Run Configurations so you can run
         // 		 your code on different programs without changing the code each time.
         //		 Otherwise, you will just see your program runs without any output.
-        System.out.println("Linter starting...");
+
+        File patterns = new File("src/main/java/Domain/PatternCheck");
+        File styles = new File("src/main/java/Domain/PatternCheck");
+        File principles = new File("src/main/java/Domain/PatternCheck");
+
+        ArrayList<File> checks = new ArrayList<>();
+        checks.addAll(List.of(patterns.listFiles()));
+        checks.addAll(List.of(styles.listFiles()));
+        checks.addAll(List.of(principles.listFiles()));
+
+        List<String> checkNames = new ArrayList<>();
+        checks.forEach(file -> {checkNames.add(file.getName());});
+
+        JFrame frame = new JFrame("JComboBox Popup");
+        Object pane = JOptionPane.showInputDialog(
+                frame,
+                "Choose a check to run:\n",
+                "Customized Dialog",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                checks.toArray(),
+                checkNames.get(0));
+        String s = pane.toString();
+        //If a string was returned, say so.
+        if ((s != null) && (!s.isEmpty())) {
+            System.out.println(s);
+        }
+
         for (String className : args) {
             // One way to read in a Java class with ASM:
             // Step 1. ASM's ClassReader does the heavy lifting of parsing the compiled Java class.

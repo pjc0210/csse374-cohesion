@@ -1,11 +1,13 @@
 package Domain.PrincipleCheck;
 
+import Domain.Category;
 import Domain.Interfaces.IPrincipleCheck;
 import Domain.LintResult;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EncapsulationCheck implements IPrincipleCheck {
@@ -14,14 +16,17 @@ public class EncapsulationCheck implements IPrincipleCheck {
 
     @Override
     public List<LintResult> execute(ClassNode classNode){
+
+        List<LintResult> lintResults = new ArrayList<>();
+
         List<FieldNode> fields = classNode.fields;
 
         for(FieldNode field : fields){
             if(field.access != Opcodes.ACC_STATIC && field.access != Opcodes.ACC_PRIVATE){
-                return ;
+                ;lintResults.add(new LintResult(getName(), Category.PRINCIPLE, "working on it", "Your fields do not adhere to the rules of encapsulation. \nCheck that your fields are private or static."));
             }
         }
-        return true;
+        return lintResults;
     }
 
     @Override
