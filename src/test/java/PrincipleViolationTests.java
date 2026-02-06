@@ -32,9 +32,11 @@ public class PrincipleViolationTests {
         ClassReader reader = new ClassReader("EncapsulationViolationDataClass");
         // Step 2. ClassNode is just a data container for the parsed class
         ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
         List<LintResult> results = ec.execute(classNode);
-        
-        assertEquals(0, results.size(), "help");
+//        System.out.println(results);
+        assertEquals(1, results.size(), "help");
     }
     
 

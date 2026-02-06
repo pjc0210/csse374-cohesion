@@ -22,7 +22,10 @@ public class EncapsulationCheck implements IPrincipleCheck {
         List<FieldNode> fields = classNode.fields;
 
         for(FieldNode field : fields){
-            if(field.access != Opcodes.ACC_STATIC && field.access != Opcodes.ACC_PRIVATE){
+            boolean isPrivate = (field.access & Opcodes.ACC_PRIVATE) == Opcodes.ACC_PRIVATE;
+            boolean isStatic = (field.access & Opcodes.ACC_STATIC) == Opcodes.ACC_STATIC;
+            if(!isPrivate && !isStatic){
+                System.out.println(field.name + " " + field.access);
                 ;lintResults.add(new LintResult(getName(), Category.PRINCIPLE, "working on it", "Your fields do not adhere to the rules of encapsulation. \nCheck that your fields are private or static."));
             }
         }
