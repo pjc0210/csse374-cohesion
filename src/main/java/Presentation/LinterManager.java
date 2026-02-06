@@ -29,6 +29,7 @@ public class LinterManager {
         // TODO: Learn how to create separate Run Configurations so you can run
         // 		 your code on different programs without changing the code each time.
         //		 Otherwise, you will just see your program runs without any output.
+        String check = getRequestedCheck();
 
         File patterns = new File("src/main/java/Domain/PatternCheck");
         File styles = new File("src/main/java/Domain/PatternCheck");
@@ -75,6 +76,7 @@ public class LinterManager {
             printFields(classNode);
 
             printMethods(classNode);
+
         }
     }
 
@@ -166,4 +168,35 @@ public class LinterManager {
             // TODO: how do I write a lint check to tell if this method has a bad name?
         }
     }
+    private static String getRequestedCheck() {
+        File patterns = new File("src/main/java/Domain/PatternCheck");
+        File styles = new File("src/main/java/Domain/PatternCheck");
+        File principles = new File("src/main/java/Domain/PatternCheck");
+
+        ArrayList<File> checks = new ArrayList<>();
+        checks.addAll(List.of(patterns.listFiles()));
+        checks.addAll(List.of(styles.listFiles()));
+        checks.addAll(List.of(principles.listFiles()));
+
+        List<String> checkNames = new ArrayList<>();
+        checks.forEach(file -> {checkNames.add(file.getName());});
+
+        JFrame frame = new JFrame("JComboBox Popup");
+        Object pane = JOptionPane.showInputDialog(
+                frame,
+                "Choose a check to run:\n",
+                "Customized Dialog",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                checks.toArray(),
+                checkNames.get(0));
+        String s = pane.toString();
+        //If a string was returned, say so.
+        if ((s != null) && (!s.isEmpty())) {
+            System.out.println(s);
+        }
+        return null;
+    }
 }
+
+
