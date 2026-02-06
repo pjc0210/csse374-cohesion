@@ -38,7 +38,6 @@ public class Linter {
         this.allChecks.add(new Domain.PrincipleCheck.CodeDuplicationCheck());
         this.allChecks.add(new Domain.PrincipleCheck.EncapsulationCheck());
         this.allChecks.add(new Domain.PrincipleCheck.HollywoodPrincipleCheck());
-        this.allChecks.add(new Domain.PrincipleCheck.OpenClosedCheck());
 
         // add style checks
         this.allChecks.add(new Domain.StyleCheck.CamelCaseCheck());
