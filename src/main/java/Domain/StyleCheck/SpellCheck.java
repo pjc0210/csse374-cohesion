@@ -24,7 +24,7 @@ public class SpellCheck implements IStyleCheck {
     JTextArea text = new JTextArea();
 
     @Override
-    public List<LintResult> execute(ClassNode classnode) {
+    public List<LintResult> execute(ClassNode classNode) {
         List<LintResult> lintResults = new ArrayList<>();
 
         manager = JSpellDictionaryManager.getJSpellDictionaryManager();
