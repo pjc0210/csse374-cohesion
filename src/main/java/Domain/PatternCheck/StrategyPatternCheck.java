@@ -13,7 +13,7 @@ import java.util.List;
 public class StrategyPatternCheck implements IPatternCheck {
 
     @Override
-    public List<LintResult> execute(ClassNode classnode) {
+    public List<LintResult> execute(ClassNode classNode) {
         return List.of();
     }
 

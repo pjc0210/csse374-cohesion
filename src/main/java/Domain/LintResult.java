@@ -20,4 +20,12 @@ public class LintResult {
     public String getMessage(){
         return message;
     }
+
+    public String getCheckName() {
+        return this.checkName;
+    }
+
+    public Category getCategory(){
+        return this.category;
+    }
 }

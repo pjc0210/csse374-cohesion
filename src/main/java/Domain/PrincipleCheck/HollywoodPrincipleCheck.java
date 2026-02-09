@@ -12,7 +12,7 @@ import java.util.List;
 
 public class HollywoodPrincipleCheck implements IPrincipleCheck {
     @Override
-    public List<LintResult> execute(ClassNode classnode) {
+    public List<LintResult> execute(ClassNode classNode) {
         return List.of();
     }
 

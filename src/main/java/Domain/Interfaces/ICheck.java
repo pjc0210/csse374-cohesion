@@ -6,6 +6,6 @@ import org.objectweb.asm.tree.ClassNode;
 import java.util.List;
 
 public interface ICheck {
-    List<LintResult> execute(ClassNode classnode);
+    List<LintResult> execute(ClassNode classNode);
     String getName();
 }

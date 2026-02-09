@@ -44,7 +44,7 @@ public class Linter {
         this.allChecks.add(new Domain.StyleCheck.DataTypeCompatibilityCheck());
         this.allChecks.add(new Domain.StyleCheck.GlobalVariableCheck());
         this.allChecks.add(new Domain.StyleCheck.MissingAbstractImplCheck());
-        this.allChecks.add(new Domain.StyleCheck.SpellCheck());
+//        this.allChecks.add(new Domain.StyleCheck.SpellCheck());
         this.allChecks.add(new Domain.StyleCheck.SwallowedExceptionCheck());
         this.allChecks.add(new Domain.StyleCheck.UnusedParametersCheck());
         this.allChecks.add(new Domain.StyleCheck.UnusedVariablesCheck());
