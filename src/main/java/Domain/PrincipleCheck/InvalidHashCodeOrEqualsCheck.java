@@ -36,7 +36,6 @@ public class InvalidHashCodeOrEqualsCheck implements IPrincipleCheck {
             }
         }
 
-        // XOR check: exactly one is overridden but not both
         if (hasEqualsOverride ^ hasHashCodeOverride) {
             String message;
             if (hasEqualsOverride) {
