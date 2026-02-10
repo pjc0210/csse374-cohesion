@@ -1,202 +1,477 @@
 package Presentation;
 
+import Domain.Category;
 import Domain.Interfaces.ICheck;
+import Domain.Interfaces.IPatternCheck;
+import Domain.Interfaces.IPrincipleCheck;
+import Domain.Interfaces.IStyleCheck;
+import Domain.LintResult;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.List;
 
-// FIXME: this code has TERRIBLE DESIGN all around
-public class LinterManager {
+/**
+ * GUI-based Linter Manager
+ * Allows users to:
+ * 1. Select which linter checks to run
+ * 2. Choose files or packages to lint
+ * 3. View results in a formatted output
+ */
+public class LinterManager extends JFrame {
+
+    private JPanel checkBoxPanel;
+    private List<JCheckBox> checkBoxes;
+    private JTextArea outputArea;
+    private JLabel statusLabel;
+    private JButton selectFilesButton;
+    private JButton selectPackageButton;
+    private JButton runLinterButton;
+    private List<File> selectedFiles;
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                // Use default look and feel
+            }
+
+            LinterManager manager = new LinterManager();
+            manager.setVisible(true);
+        });
+    }
+
+    public LinterManager() {
+        selectedFiles = new ArrayList<>();
+        checkBoxes = new ArrayList<>();
+        initializeUI();
+        loadAvailableChecks();
+    }
+
+    private void initializeUI() {
+        setTitle("Java Linter Manager");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1000, 700);
+        setLocationRelativeTo(null);
+
+        // Main panel with border layout
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        // Top panel - File selection
+        JPanel topPanel = createFileSelectionPanel();
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+
+        // Center panel - Split between checks and output
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setDividerLocation(350);
+
+        // Left side - Check selection
+        JPanel checkPanel = createCheckSelectionPanel();
+        splitPane.setLeftComponent(checkPanel);
+
+        // Right side - Output
+        JPanel outputPanel = createOutputPanel();
+        splitPane.setRightComponent(outputPanel);
+
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+
+        // Bottom panel - Status and run button
+        JPanel bottomPanel = createBottomPanel();
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        add(mainPanel);
+    }
+
+    private JPanel createFileSelectionPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("File/Package Selection"));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        selectFilesButton = new JButton("Select .class Files");
+        selectFilesButton.addActionListener(e -> selectClassFiles());
+
+        selectPackageButton = new JButton("Select Package Directory");
+        selectPackageButton.addActionListener(e -> selectPackageDirectory());
+
+        JButton clearButton = new JButton("Clear Selection");
+        clearButton.addActionListener(e -> clearSelection());
+
+        buttonPanel.add(selectFilesButton);
+        buttonPanel.add(selectPackageButton);
+        buttonPanel.add(clearButton);
+
+        statusLabel = new JLabel("No files selected");
+        statusLabel.setBorder(new EmptyBorder(5, 5, 5, 5));
+
+        panel.add(buttonPanel, BorderLayout.NORTH);
+        panel.add(statusLabel, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JPanel createCheckSelectionPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Available Checks"));
+
+        // Use a panel with checkboxes
+        checkBoxPanel = new JPanel();
+        checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.Y_AXIS));
+
+        JScrollPane scrollPane = new JScrollPane(checkBoxPanel);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        // Buttons for select all/none
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+
+        JButton selectAllButton = new JButton("Select All");
+        selectAllButton.addActionListener(e -> checkBoxes.forEach(cb -> cb.setSelected(true)));
+
+        JButton selectNoneButton = new JButton("Select None");
+        selectNoneButton.addActionListener(e -> checkBoxes.forEach(cb -> cb.setSelected(false)));
+
+        JButton selectByCategoryButton = new JButton("Select by Category...");
+        selectByCategoryButton.addActionListener(e -> selectByCategory());
+
+        buttonPanel.add(selectAllButton);
+        buttonPanel.add(selectNoneButton);
+        buttonPanel.add(selectByCategoryButton);
+
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private JPanel createOutputPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Linter Output"));
+
+        outputArea = new JTextArea();
+        outputArea.setEditable(false);
+        outputArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+
+        JScrollPane scrollPane = new JScrollPane(outputArea);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JButton clearOutputButton = new JButton("Clear Output");
+        clearOutputButton.addActionListener(e -> outputArea.setText(""));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(clearOutputButton);
+
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private JPanel createBottomPanel() {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+        runLinterButton = new JButton("Run Linter");
+        runLinterButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        runLinterButton.addActionListener(e -> runLinter());
+
+        panel.add(runLinterButton);
+
+        return panel;
+    }
+
+    private void loadAvailableChecks() {
+        List<CheckWrapper> checks = new ArrayList<>();
+
+        // Load Pattern Checks
+        checks.addAll(loadChecksFromPackage("Domain.PatternCheck", IPatternCheck.class, Category.PATTERN));
+
+        // Load Style Checks
+        checks.addAll(loadChecksFromPackage("Domain.StyleCheck", IStyleCheck.class, Category.STYLE));
+
+        // Load Principle Checks
+        checks.addAll(loadChecksFromPackage("Domain.PrincipleCheck", IPrincipleCheck.class, Category.PRINCIPLE));
+
+        // Sort checks by category and name
+        checks.sort(Comparator.comparing((CheckWrapper c) -> c.category).thenComparing(c -> c.check.getName()));
+
+        // Add checkboxes for each check
+        for (CheckWrapper check : checks) {
+            String categoryIcon = "";
+            switch (check.category) {
+                case PATTERN:
+                    categoryIcon = "🔷";
+                    break;
+                case STYLE:
+                    categoryIcon = "✏️";
+                    break;
+                case PRINCIPLE:
+                    categoryIcon = "📐";
+                    break;
+            }
+
+            JCheckBox checkBox = new JCheckBox(categoryIcon + " " + check.check.getName() + " (" + check.category + ")");
+            checkBox.setSelected(true);
+            checkBox.putClientProperty("checkWrapper", check);
+
+            checkBoxes.add(checkBox);
+            checkBoxPanel.add(checkBox);
+        }
+
+        checkBoxPanel.revalidate();
+        checkBoxPanel.repaint();
+
+        if (checks.isEmpty()) {
+            outputArea.append("Warning: No checks found. Make sure check classes are compiled.\n");
+            outputArea.append("Looking in:\n");
+            outputArea.append("  - Domain.PatternCheck\n");
+            outputArea.append("  - Domain.StyleCheck\n");
+            outputArea.append("  - Domain.PrincipleCheck\n");
+        } else {
+            outputArea.append("Loaded " + checks.size() + " check(s)\n");
+        }
+    }
+
+    private List<CheckWrapper> loadChecksFromPackage(String packageName, Class<?> interfaceType, Category category) {
+        List<CheckWrapper> checks = new ArrayList<>();
+
+        try {
+            String path = packageName.replace('.', '/');
+            File packageDir = new File("target/classes/" + path);
+
+            if (!packageDir.exists()) {
+                packageDir = new File("out/production/classes/" + path);
+            }
+
+            if (!packageDir.exists()) {
+                return checks;
+            }
+
+            File[] files = packageDir.listFiles((dir, name) -> name.endsWith(".class"));
+
+            if (files != null) {
+                for (File file : files) {
+                    String className = file.getName().replace(".class", "");
+                    String fullClassName = packageName + "." + className;
+
+                    try {
+                        Class<?> clazz = Class.forName(fullClassName);
+
+                        // Check if it implements ICheck and is not an interface
+                        if (ICheck.class.isAssignableFrom(clazz) && !clazz.isInterface()) {
+                            Constructor<?> constructor = clazz.getDeclaredConstructor();
+                            ICheck instance = (ICheck) constructor.newInstance();
+                            checks.add(new CheckWrapper(instance, category));
+                        }
+                    } catch (Exception e) {
+                        // Skip classes that can't be instantiated
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading checks from " + packageName + ": " + e.getMessage());
+        }
+
+        return checks;
+    }
+
+    private void selectClassFiles() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File("target/test-classes"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Java Class Files (*.class)", "class"));
+        fileChooser.setMultiSelectionEnabled(true);
+
+        int result = fileChooser.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File[] files = fileChooser.getSelectedFiles();
+            selectedFiles = new ArrayList<>(Arrays.asList(files));
+            updateFileSelectionStatus();
+        }
+    }
+
+    private void selectPackageDirectory() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setCurrentDirectory(new File("target/test-classes"));
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        int result = fileChooser.showOpenDialog(this);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File directory = fileChooser.getSelectedFile();
+            selectedFiles = new ArrayList<>();
+            collectClassFiles(directory, selectedFiles);
+            updateFileSelectionStatus();
+        }
+    }
+
+    private void collectClassFiles(File directory, List<File> fileList) {
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    collectClassFiles(file, fileList);
+                } else if (file.getName().endsWith(".class")) {
+                    fileList.add(file);
+                }
+            }
+        }
+    }
+
+    private void clearSelection() {
+        selectedFiles.clear();
+        updateFileSelectionStatus();
+    }
+
+    private void updateFileSelectionStatus() {
+        if (selectedFiles.isEmpty()) {
+            statusLabel.setText("No files selected");
+        } else {
+            statusLabel.setText(selectedFiles.size() + " file(s) selected");
+        }
+    }
+
+    private void selectByCategory() {
+        Category[] categories = {Category.PATTERN, Category.STYLE, Category.PRINCIPLE};
+
+        Category selected = (Category) JOptionPane.showInputDialog(
+                this,
+                "Select a category to enable (others will be disabled):",
+                "Select by Category",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                categories,
+                categories[0]
+        );
+
+        if (selected != null) {
+            for (JCheckBox checkBox : checkBoxes) {
+                CheckWrapper wrapper = (CheckWrapper) checkBox.getClientProperty("checkWrapper");
+                checkBox.setSelected(wrapper.category == selected);
+            }
+        }
+    }
+
+    private void runLinter() {
+        if (selectedFiles.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Please select files or a package to lint first.",
+                    "No Files Selected",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        List<CheckWrapper> selectedChecks = getSelectedChecks();
+
+        if (selectedChecks.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Please select at least one check to run.",
+                    "No Checks Selected",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        outputArea.setText("");
+        outputArea.append("=".repeat(80) + "\n");
+        outputArea.append("LINTER EXECUTION STARTED\n");
+        outputArea.append("=".repeat(80) + "\n\n");
+        outputArea.append("Running " + selectedChecks.size() + " check(s) on " +
+                selectedFiles.size() + " file(s)\n\n");
+
+        int totalViolations = 0;
+
+        for (File file : selectedFiles) {
+            try {
+                ClassNode classNode = loadClassNode(file);
+
+                outputArea.append("-".repeat(80) + "\n");
+                outputArea.append("Analyzing: " + classNode.name + "\n");
+                outputArea.append("-".repeat(80) + "\n");
+
+                boolean hasViolations = false;
+
+                for (CheckWrapper checkWrapper : selectedChecks) {
+                    List<LintResult> results = checkWrapper.check.execute(classNode);
+
+                    if (!results.isEmpty()) {
+                        hasViolations = true;
+                        outputArea.append("\n[" + checkWrapper.category + "] " +
+                                checkWrapper.check.getName() + ":\n");
+
+                        for (LintResult result : results) {
+                            totalViolations++;
+                            outputArea.append("  ⚠ " + result.getMessage() + "\n");
+                            if (result.getMessage() != null && !result.getMessage().isEmpty()) {
+                                outputArea.append("    → " + result.getMessage() + "\n");
+                            }
+                        }
+                    }
+                }
+
+                if (!hasViolations) {
+                    outputArea.append("  ✓ No violations found\n");
+                }
+
+                outputArea.append("\n");
+
+            } catch (IOException e) {
+                outputArea.append("  ✗ Error loading file: " + e.getMessage() + "\n\n");
+            }
+        }
+
+        outputArea.append("=".repeat(80) + "\n");
+        outputArea.append("LINTER EXECUTION COMPLETED\n");
+        outputArea.append("Total violations found: " + totalViolations + "\n");
+        outputArea.append("=".repeat(80) + "\n");
+
+        // Scroll to top
+        outputArea.setCaretPosition(0);
+    }
+
+    private List<CheckWrapper> getSelectedChecks() {
+        List<CheckWrapper> selected = new ArrayList<>();
+
+        for (JCheckBox checkBox : checkBoxes) {
+            if (checkBox.isSelected()) {
+                CheckWrapper wrapper = (CheckWrapper) checkBox.getClientProperty("checkWrapper");
+                selected.add(wrapper);
+            }
+        }
+
+        return selected;
+    }
+
+    private ClassNode loadClassNode(File classFile) throws IOException {
+        try (FileInputStream fis = new FileInputStream(classFile)) {
+            ClassReader reader = new ClassReader(fis);
+            ClassNode classNode = new ClassNode();
+            reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+            return classNode;
+        }
+    }
 
     /**
-     * Reads in a list of Java Classes and prints fun facts about them.
-     *
-     * For more information, read: https://asm.ow2.io/asm4-guide.pdf
-     *
-     * @param args
-     *            : the names of the classes, separated by spaces. For example:
-     *            java example.MyFirstLinter java.lang.String
-     * @throws IOException
-     * @throws ClassNotFoundException
+     * Wrapper class for checks with category information
      */
-    public static void main(String[] args) throws IOException {
-        // TODO: Learn how to create separate Run Configurations so you can run
-        // 		 your code on different programs without changing the code each time.
-        //		 Otherwise, you will just see your program runs without any output.
-        String check = getRequestedCheck();
+    private static class CheckWrapper {
+        ICheck check;
+        Category category;
 
-        File patterns = new File("src/main/java/Domain/PatternCheck");
-        File styles = new File("src/main/java/Domain/PatternCheck");
-        File principles = new File("src/main/java/Domain/PatternCheck");
-
-        ArrayList<File> checks = new ArrayList<>();
-        checks.addAll(List.of(patterns.listFiles()));
-        checks.addAll(List.of(styles.listFiles()));
-        checks.addAll(List.of(principles.listFiles()));
-
-        List<String> checkNames = new ArrayList<>();
-        checks.forEach(file -> {checkNames.add(file.getName());});
-
-        JFrame frame = new JFrame("JComboBox Popup");
-        Object pane = JOptionPane.showInputDialog(
-                frame,
-                "Choose a check to run:\n",
-                "Customized Dialog",
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                checks.toArray(),
-                checkNames.get(0));
-        String s = pane.toString();
-        //If a string was returned, say so.
-        if ((s != null) && (!s.isEmpty())) {
-            System.out.println(s);
+        CheckWrapper(ICheck check, Category category) {
+            this.check = check;
+            this.category = category;
         }
 
-        for (String className : args) {
-            // One way to read in a Java class with ASM:
-            // Step 1. ASM's ClassReader does the heavy lifting of parsing the compiled Java class.
-            ClassReader reader = new ClassReader(className);
-
-            // Step 2. ClassNode is just a data container for the parsed class
-            ClassNode classNode = new ClassNode();
-
-            // Step 3. Tell the Reader to parse the specified class and store its data in our ClassNode.
-            // EXPAND_FRAMES means: I want my code to work. (Always pass this flag.)
-            reader.accept(classNode, ClassReader.EXPAND_FRAMES);
-
-            // Now we can navigate the classNode and look for things we are interested in.
-            printClass(classNode);
-
-            printFields(classNode);
-
-            printMethods(classNode);
-
+        @Override
+        public String toString() {
+            return check.getName();
         }
-    }
-
-    private static void printClass(ClassNode classNode) {
-        System.out.println("Class's Internal JVM name: " + classNode.name);
-        System.out.println("User-friendly name: "
-                + Type.getObjectType(classNode.name).getClassName());
-        System.out.println("public? "
-                + ((classNode.access & Opcodes.ACC_PUBLIC) != 0));
-        System.out.println("Extends: " + classNode.superName);
-        System.out.println("Implements: " + classNode.interfaces);
-        // TODO: how do I write a lint check to tell if this class has a bad name?
-    }
-
-    private static void printFields(ClassNode classNode) {
-        // Print all fields (note the cast; ASM doesn't store generic data with its Lists)
-        List<FieldNode> fields = (List<FieldNode>) classNode.fields;
-        for (FieldNode field : fields) {
-            System.out.println("	Field: " + field.name);
-            System.out.println("	Internal JVM type: " + field.desc);
-            System.out.println("	User-friendly type: "
-                    + Type.getObjectType(field.desc).getClassName());
-            // Query the access modifiers with the ACC_* constants.
-
-            System.out.println("	public? "
-                    + ((field.access & Opcodes.ACC_PUBLIC) != 0));
-            // TODO: how do you tell if something has package-private access? (ie no access modifiers?)
-
-            // TODO: how do I write a lint check to tell if this field has a bad name?
-
-            System.out.println();
-        }
-    }
-
-    private static void printMethods(ClassNode classNode) {
-        List<MethodNode> methods = (List<MethodNode>) classNode.methods;
-        for (MethodNode method : methods) {
-            System.out.println("	Method: " + method.name);
-            System.out
-                    .println("	Internal JVM method signature: " + method.desc);
-
-            System.out.println("	Return type: "
-                    + Type.getReturnType(method.desc).getClassName());
-
-            System.out.println("	Args: ");
-            for (Type argType : Type.getArgumentTypes(method.desc)) {
-                System.out.println("		" + argType.getClassName());
-                // FIXME: what is the argument's *variable* name?
-            }
-
-            System.out.println("	public? "
-                    + ((method.access & Opcodes.ACC_PUBLIC) != 0));
-            System.out.println("	static? "
-                    + ((method.access & Opcodes.ACC_STATIC) != 0));
-            // How do you tell if something has default access? (ie no access modifiers?)
-
-            System.out.println();
-
-            // Print the method's instructions
-            printInstructions(method);
-        }
-    }
-
-    private static void printInstructions(MethodNode methodNode) {
-        InsnList instructions = methodNode.instructions;
-        for (int i = 0; i < instructions.size(); i++) {
-
-            // We don't know immediately what kind of instruction we have.
-            AbstractInsnNode insn = instructions.get(i);
-
-            // FIXME: Is instanceof the best way to deal with the instruction's type?
-            if (insn instanceof MethodInsnNode) {
-                // A method call of some sort; what other useful fields does this object have?
-                MethodInsnNode methodCall = (MethodInsnNode) insn;
-                System.out.println("		Call method: " + methodCall.owner + " "
-                        + methodCall.name);
-            } else if (insn instanceof VarInsnNode) {
-                // Some some kind of variable *LOAD or *STORE operation.
-                VarInsnNode varInsn = (VarInsnNode) insn;
-                int opCode = varInsn.getOpcode();
-                // See VarInsnNode.setOpcode for the list of possible values of
-                // opCode. These are from a variable-related subset of Java
-                // opcodes.
-            }
-            // There are others...
-            // This list of direct known subclasses may be useful:
-            // http://asm.ow2.org/asm50/javadoc/user/org/objectweb/asm/tree/AbstractInsnNode.html
-
-            // TODO: how do I write a lint check to tell if this method has a bad name?
-        }
-    }
-    private static String getRequestedCheck() {
-        File patterns = new File("src/main/java/Domain/PatternCheck");
-        File styles = new File("src/main/java/Domain/PatternCheck");
-        File principles = new File("src/main/java/Domain/PatternCheck");
-
-        ArrayList<File> checks = new ArrayList<>();
-        checks.addAll(List.of(patterns.listFiles()));
-        checks.addAll(List.of(styles.listFiles()));
-        checks.addAll(List.of(principles.listFiles()));
-
-        List<String> checkNames = new ArrayList<>();
-        checks.forEach(file -> {checkNames.add(file.getName());});
-
-        JFrame frame = new JFrame("JComboBox Popup");
-        Object pane = JOptionPane.showInputDialog(
-                frame,
-                "Choose a check to run:\n",
-                "Customized Dialog",
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                checks.toArray(),
-                checkNames.get(0));
-        String s = pane.toString();
-        //If a string was returned, say so.
-        if ((s != null) && (!s.isEmpty())) {
-            System.out.println(s);
-        }
-        return null;
     }
 }
-
-
