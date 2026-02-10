@@ -95,7 +95,7 @@ public class GlobalVariableCheck implements IStyleCheck {
             ));
         }
 
-        // Check that constants are public (best practice)
+        // Check that constants are public or private (best practice)
         if (!isPublic(field) && !isPrivate(field)) {
             lintResults.add(new LintResult(
                     getName(),
@@ -139,11 +139,12 @@ public class GlobalVariableCheck implements IStyleCheck {
      * Examples: MAX_VALUE, DEFAULT_SIZE, PI
      */
     private boolean isUpperSnakeCase(String name) {
+        // Empty name is invalid
         if (name == null || name.isEmpty()) {
             return false;
         }
 
-        // Should not start or end with underscore (except for special cases like serialVersionUID)
+        // Special case for serialVersionUID
         if (name.equals("serialVersionUID")) {
             return true;
         }
@@ -159,18 +160,22 @@ public class GlobalVariableCheck implements IStyleCheck {
      * Examples: instanceCount, myVariable, count
      */
     private boolean isCamelCase(String name) {
+        // Empty name is invalid
         if (name == null || name.isEmpty()) {
             return false;
         }
 
+        // Should start with lowercase letter
         if (!Character.isLowerCase(name.charAt(0))) {
             return false;
         }
 
+        // Should not contain underscores (that's snake_case)
         if (name.contains("_")) {
             return false;
         }
 
+        // Should only contain letters and digits
         return name.matches("^[a-z][a-zA-Z0-9]*$");
     }
 
