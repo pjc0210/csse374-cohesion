@@ -6,7 +6,7 @@ for class in package
     methods = class.methods()
     for m in methods
         if m.isDecorator
-            if m.parameter.isNotUsed()
+            if m.parameter.isNotUsed() (or some other way to see if a decorator is "bad")
                 return false
 
 (B)
