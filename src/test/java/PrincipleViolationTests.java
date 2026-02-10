@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
+import Domain.PrincipleCheck.EncapsulationCheck;
+import Domain.PrincipleCheck.HollywoodPrincipleCheck;
+import Domain.PrincipleCheck.InvalidHashCodeOrEqualsCheck;
 
 import java.io.IOException;
 import java.util.List;
@@ -132,6 +135,87 @@ public class PrincipleViolationTests {
         List<LintResult> results = checker.execute(classNode);
         assertEquals(0, results.size(),
                 "Should not flag when both methods exist among many methods");
+    }
+
+    // ==================== HOLLYWOOD PRINCIPLE TESTS ====================
+
+    @Test
+    @DisplayName("[Hollywood Principle] Interface class - should not flag")
+    public void testHollywoodSkipsInterface() throws IOException {
+        HollywoodPrincipleCheck checker = new HollywoodPrincipleCheck();
+        ClassReader reader = new ClassReader("hollywoodExamples.HP_Interface");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = checker.execute(classNode);
+        assertEquals(0, results.size(), "Interfaces should be skipped");
+    }
+
+    @Test
+    @DisplayName("[Hollywood Principle] Abstract class - should not flag")
+    public void testHollywoodSkipsAbstractClass() throws IOException {
+        HollywoodPrincipleCheck checker = new HollywoodPrincipleCheck();
+        ClassReader reader = new ClassReader("hollywoodExamples.HP_AbstractBase");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = checker.execute(classNode);
+        assertEquals(0, results.size(), "Abstract classes should be skipped");
+    }
+
+    @Test
+    @DisplayName("[Hollywood Principle] Concrete class calling framework-like class - should flag")
+    public void testHollywoodFlagsFrameworkCall() throws IOException {
+        HollywoodPrincipleCheck checker = new HollywoodPrincipleCheck();
+        ClassReader reader = new ClassReader("hollywoodExamples.HP_ConcreteCallsFramework");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = checker.execute(classNode);
+
+        assertTrue(results.size() >= 1, "Should flag at least one violation");
+        assertTrue(results.get(0).getMessage().toLowerCase().contains("hollywood principle"),
+                "Message should mention Hollywood Principle");
+    }
+
+    @Test
+    @DisplayName("[Hollywood Principle] Impl class calling a Manager/Controller - should flag")
+    public void testHollywoodFlagsImplCallingHighLevel() throws IOException {
+        HollywoodPrincipleCheck checker = new HollywoodPrincipleCheck();
+        ClassReader reader = new ClassReader("hollywoodExamples.HP_ImplCallsManager");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = checker.execute(classNode);
+
+        assertTrue(results.size() >= 1, "Should flag at least one violation");
+        boolean mentionsHighLevel = results.stream().anyMatch(r ->
+                r.getMessage().contains("high-level") || r.getMessage().contains("Manager") || r.getMessage().contains("Controller"));
+        assertTrue(mentionsHighLevel, "Message should indicate high-level/framework call");
+    }
+
+    @Test
+    @DisplayName("[Hollywood Principle] Only calls java.* library - should not flag")
+    public void testHollywoodAllowsStandardLibraryCalls() throws IOException {
+        HollywoodPrincipleCheck checker = new HollywoodPrincipleCheck();
+        ClassReader reader = new ClassReader("hollywoodExamples.HP_StandardLibraryOnly");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = checker.execute(classNode);
+        assertEquals(0, results.size(), "Calls to java.* should not be flagged");
+    }
+
+    @Test
+    @DisplayName("[Hollywood Principle] Constructor calls only - should not flag")
+    public void testHollywoodSkipsConstructors() throws IOException {
+        HollywoodPrincipleCheck checker = new HollywoodPrincipleCheck();
+        ClassReader reader = new ClassReader("hollywoodExamples.HP_ConstructorOnly");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = checker.execute(classNode);
+        assertEquals(0, results.size(), "Constructor-only calls should be ignored");
     }
 
 }

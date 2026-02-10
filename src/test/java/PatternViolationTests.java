@@ -1,8 +1,10 @@
 import Domain.LintResult;
+import Domain.PatternCheck.RedundantInterfaceCheck;
 import Domain.PrincipleCheck.EncapsulationCheck;
 import Domain.PatternCheck.DecoratorPatternCheck;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -14,6 +16,61 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 public class PatternViolationTests {
+
+    @Test
+    @DisplayName("[Redundant Interface] No interfaces - should not flag")
+    public void testNoInterfaces() throws IOException {
+        RedundantInterfaceCheck ric = new RedundantInterfaceCheck();
+        ClassReader reader = new ClassReader("redundantInterfaceExamples.RI_NoInterfaces");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = ric.execute(classNode);
+        assertEquals(0, results.size());
+    }
+
+    @Test
+    @DisplayName("[Redundant Interface] Single interface - should not flag")
+    public void testSingleInterface() throws IOException {
+        RedundantInterfaceCheck ric = new RedundantInterfaceCheck();
+        ClassReader reader = new ClassReader("redundantInterfaceExamples.RI_JustOneInterface");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = ric.execute(classNode);
+        assertEquals(0, results.size());
+    }
+
+    @Test
+    @DisplayName("[Redundant Interface] Extends ArrayList and also implements List - should flag")
+    public void testRedundantList() throws IOException {
+        RedundantInterfaceCheck ric = new RedundantInterfaceCheck();
+        ClassReader reader = new ClassReader("redundantInterfaceExamples.RI_OnlyExtendsList");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = ric.execute(classNode);
+        assertTrue(results.size() >= 1, "Should flag at least one redundant interface");
+
+        String msg = results.get(0).getMessage();
+        assertTrue(msg.toLowerCase().contains("redundant") || msg.toLowerCase().contains("interface"));
+    }
+
+    @Test
+    @DisplayName("[Redundant Interface] Multiple redundant interfaces - should flag")
+    public void testMultipleRedundantInterfaces() throws IOException {
+        RedundantInterfaceCheck ric = new RedundantInterfaceCheck();
+        ClassReader reader = new ClassReader("redundantInterfaceExamples.RI_RedundantInterfaces");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = ric.execute(classNode);
+        assertTrue(results.size() >= 1, "Should flag redundant interfaces");
+
+        boolean mentionsList = results.stream()
+                .anyMatch(r -> r.getMessage().contains("List") || r.getMessage().toLowerCase().contains("list"));
+        assertTrue(mentionsList, "At least one result should mention List being redundant (common case)");
+    }
 
     @Test
     @DisplayName("Good decorator - should not flag")
