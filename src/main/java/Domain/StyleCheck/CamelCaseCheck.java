@@ -52,7 +52,7 @@ public class CamelCaseCheck implements IStyleCheck {
         return results;
     }
 
-
+//
     @Override
     public String getName() {
         return "CamelCase";
