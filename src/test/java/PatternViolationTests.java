@@ -1,5 +1,6 @@
 import Domain.LintResult;
 import Domain.PatternCheck.RedundantInterfaceCheck;
+import Domain.PatternCheck.ThreeLayerPatternCheck;
 import Domain.PrincipleCheck.EncapsulationCheck;
 import Domain.PatternCheck.DecoratorPatternCheck;
 import org.junit.jupiter.api.Test;
@@ -150,4 +151,69 @@ public class PatternViolationTests {
         assertEquals(0, results.size(),
                 "Regular class should not be identified as decorator");
     }
+
+    @Test
+    @DisplayName("Not a decorator - should not flag")
+    public void testpath() throws IOException {
+        ThreeLayerPatternCheck checker = new ThreeLayerPatternCheck();
+        ClassReader reader = new ClassReader("SpellCheckExamples.NoErrorsClass");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+        // placeholder removed; replaced by focused three-layer tests below
+    }
+
+    @Test
+    @DisplayName("[ThreeLayer] Presentation -> Data should flag")
+    public void testPresentationToData() throws IOException {
+        ThreeLayerPatternCheck checker = new ThreeLayerPatternCheck();
+        ClassReader reader = new ClassReader("threeelayerpatterntexamples.presentation.PresentationController");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = checker.execute(classNode);
+        assertTrue(results.size() >= 1, "Presentation referencing Data should be flagged");
+        boolean mentions = results.stream().anyMatch(r -> r.getMessage().toLowerCase().contains("presentation") || r.getMessage().toLowerCase().contains("data"));
+        assertTrue(mentions, "Result should mention presentation/data relationship");
+    }
+
+    @Test
+    @DisplayName("[ThreeLayer] Data -> Presentation should flag")
+    public void testDataToPresentation() throws IOException {
+        ThreeLayerPatternCheck checker = new ThreeLayerPatternCheck();
+        ClassReader reader = new ClassReader("threeelayerpatterntexamples.persistence.RepoWithPresentationRef");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = checker.execute(classNode);
+        assertTrue(results.size() >= 1, "Data referencing Presentation should be flagged");
+        boolean mentions = results.stream().anyMatch(r -> r.getMessage().toLowerCase().contains("data") || r.getMessage().toLowerCase().contains("presentation"));
+        assertTrue(mentions, "Result should mention data/presentation relationship");
+    }
+
+    @Test
+    @DisplayName("[ThreeLayer] Domain -> Presentation should flag")
+    public void testDomainToPresentation() throws IOException {
+        ThreeLayerPatternCheck checker = new ThreeLayerPatternCheck();
+        ClassReader reader = new ClassReader("threeelayerpatterntexamples.domain.DomainService");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = checker.execute(classNode);
+        assertTrue(results.size() >= 1, "Domain referencing Presentation should be flagged");
+        boolean mentions = results.stream().anyMatch(r -> r.getMessage().toLowerCase().contains("domain") || r.getMessage().toLowerCase().contains("presentation"));
+        assertTrue(mentions, "Result should mention domain/presentation relationship");
+    }
+
+    @Test
+    @DisplayName("[ThreeLayer] Presentation -> Domain should NOT flag")
+    public void testPresentationToDomainNoFlag() throws IOException {
+        ThreeLayerPatternCheck checker = new ThreeLayerPatternCheck();
+        ClassReader reader = new ClassReader("threeelayerpatterntexamples.presentation.GoodController");
+        ClassNode classNode = new ClassNode();
+        reader.accept(classNode, ClassReader.EXPAND_FRAMES);
+
+        List<LintResult> results = checker.execute(classNode);
+        assertEquals(0, results.size(), "Presentation referencing Domain should NOT be flagged");
+    }
 }
+
