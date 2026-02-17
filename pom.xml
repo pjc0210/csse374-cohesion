@@ -99,5 +99,20 @@
 			<version>5.8.2</version>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>org.languagetool</groupId>
+            <artifactId>language-en</artifactId>
+            <version>6.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.languagetool</groupId>
+            <artifactId>languagetool-core</artifactId>
+            <version>6.7</version>
+        </dependency>
+        <dependency>
+            <groupId>rhit.csse.csse374</groupId>
+            <artifactId>LinterProject</artifactId>
+            <version>1.0-rc3</version>
+        </dependency>
 	</dependencies>
 </project>
