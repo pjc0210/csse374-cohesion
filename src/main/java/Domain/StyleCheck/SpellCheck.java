@@ -26,7 +26,10 @@ public class SpellCheck implements IStyleCheck {
         List<LintResult> lintResults = new ArrayList<>();
 
        try {
-           lintResults.addAll(checkWord(classNode.name, "class name"));
+           String className = classNode.name;
+//           System.out.println(className);
+           int lastInd = (className.lastIndexOf("/") == -1) ? className.length() : className.lastIndexOf("/");
+           lintResults.addAll(checkWord(className.substring(0, lastInd), "class name"));
 
            if (classNode.fields != null) {
                for (FieldNode field : classNode.fields) {

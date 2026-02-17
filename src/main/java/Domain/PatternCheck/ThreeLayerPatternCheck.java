@@ -7,6 +7,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -37,6 +38,11 @@ public class ThreeLayerPatternCheck implements IPatternCheck {
      */
     private String findClassesDirectory(ClassNode classNode) {
         String resourcePath = classNode.name + ".class"; // classNode.name uses slashes
+        String path = resourcePath.substring(0, resourcePath.lastIndexOf('.'));
+        File currentDirFile = new File(path);
+        String helper = currentDirFile.getAbsolutePath();
+//        System.out.println(helper + " " + resourcePath);
+//        System.out.println(helper + resourcePath);
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         URL resource = loader.getResource(resourcePath);
         if (resource == null) {
@@ -77,31 +83,25 @@ public class ThreeLayerPatternCheck implements IPatternCheck {
     public List<LintResult> execute(ClassNode classNode) {
         String className = classNode.name.replace('/', '.');
 
-        System.out.println("Starting analysis from main class: " + className);
+//        System.out.println("Starting analysis from main class: " + className);
 
         // Derive the classes directory from the ClassNode
         String classesDirectory = findClassesDirectory(classNode);
 
         if (classesDirectory == null) {
-            try {
-                throw new IOException("Could not determine classes directory for: " + className);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            System.out.println("Classes directory not found: " + classesDirectory);
+            return results;
         }
 
         Path classesPath = Paths.get(classesDirectory);
 
         if (!Files.exists(classesPath)) {
-            try {
-                throw new IOException("Classes directory not found: " + classesDirectory);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+           System.out.println("Classes directory not found: " + classesDirectory);
+            return results;
         }
 
-        System.out.println("Analyzing classes in: " + classesDirectory);
-        System.out.println("=".repeat(80));
+//        System.out.println("Analyzing classes in: " + classesDirectory);
+//        System.out.println("=".repeat(80));
 
         // First, analyze the main class from the provided ClassNode
         analyzeClassNode(classNode);
