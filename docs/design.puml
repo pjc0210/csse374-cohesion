@@ -54,6 +54,20 @@ package Domain {
     class DecoratorPatternCheck {
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
+      -isLikelyDecorator(ClassNode classNode) : boolean
+      -checkDecoratorQuality(ClassNode classNode, List<LintResult> lintResults) : void
+      -findComponentFields(ClassNode classNode) : List<FieldNode>
+      -isFieldUsedInMethods(ClassNode classnode, String fieldname) : boolean
+      -isFieldDelegatedTo(ClassNode classnode, String fieldname) : boolean
+      -checkUnusedConstructorParameters(ClassNode classNode, Set<String> expectedComponentTypes, List<LintResult> lr) : void
+      -isParameterStoredInField(MethodNode constructor, List<FieldNode> fields) : boolean
+      -extractParameterTypes(String descriptor) : List<String>
+      -getSimpleClassName(String fullClassName) : String
+      -isStatic(FieldNode field) : boolean
+      -isPrimitive(String descriptor) : boolean
+      -extractClassName(String descriptor) : String
+      -isRelatedType(String type1, String type2) : boolean
+
     }
 
     class RedundantInterfaceCheck {
@@ -115,7 +129,7 @@ package Domain {
       + getName(): String
     }
 
-    class OpenClosedCheck {
+    class InvalidHashCodeOrEqualsCheck {
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
     }
@@ -147,6 +161,15 @@ package Domain {
     class GlobalVariableCheck {
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
+      -iStatic(FieldNode field) : boolean
+      -isFinal(FieldNode field) : boolean
+      -isPublic(FieldNode field) : boolean
+      -isPrivate(FieldNode field) : boolean
+      -checkGlobalVariableConventions(FieldNode field, List<LintResult> lintResults, String className) : void
+      -checkConstantNaming(FieldNode field, String fieldName, List<LintResult> lintResults, String classname) : void
+      -checkStaticVariableNaming(FieldNode field, String fieldName, Lint<LintResult> lintResults, String classname) : void
+      -isUpperSnakeCase(String name) : boolean
+      -isCamelCase(String name) : boolean
     }
 
     class CamelCaseCheck {
@@ -173,7 +196,26 @@ package Domain {
     class MissingAbstractImplCheck {
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
+      -checkAbstractMethodImplementations(ClassNode classNode, ClassNode superClass, List<LintResult> lintResults) : void
+      -collectAbstractMethods(ClassNode classNode) : Set<MethodSignature>
+      -collectImplementedMethods(ClassNode classNode) : Set<MethodSignature>
+      -collectInheritedConcreteMethods(String className) : Set<MethodSignature>
+      -loadClass(String className) : ClassNode
+      -isAbstract(ClassNode classNode) : boolean
+      -isInterface(ClassNode classNode) : boolean
+      -isAbstractMethod(MethodeNode method) : boolean
+      -isPrivate(MethodNode method) : boolean
+      -getSimpleClassName(String fullClassName) : String
     }
+    class MethodSignature{
+        -name : String
+        -descriptor : String
+        -MethodSignature(String name, String descriptior)
+        +equal(Object obj) : boolean
+        +hashCode() : int
+        +toString() : String
+    }
+
 
     class UnusedParametersCheck {
       + execute(classNode: ClassNode): List<LintResult>
@@ -264,7 +306,7 @@ RedundantInterfaceCheck ..|> IPatternCheck
 StrategyPatternCheck ..|> IPatternCheck
 ThreeLayerPatternCheck ..|> IPatternCheck
 
-OpenClosedCheck ..|> IPrincipleCheck
+InvalidHashCodeOrEqualsCheck ..|> IPrincipleCheck
 HollywoodPrincipleCheck ..|> IPrincipleCheck
 CodeDuplicationCheck ..|> IPrincipleCheck
 EncapsulationCheck ..|> IPrincipleCheck
@@ -283,7 +325,7 @@ ThreeLayerPatternCheck --> ClassInfo
 ThreeLayerPatternCheck ...> Reference
 ClassInfo --> Layer
 ThreeLayerPatternCheck...> Layer
-
+MissingAbstractImplCheck -> MethodSignature
 
 
 ' ============================================================================
@@ -295,7 +337,7 @@ IPatternCheck -[hidden]down- RedundantInterfaceCheck
 IPatternCheck -[hidden]down- StrategyPatternCheck
 IPatternCheck -[hidden]down- ThreeLayerPatternCheck
 
-IPrincipleCheck -[hidden]down- OpenClosedCheck
+IPrincipleCheck -[hidden]down- InvalidHashCodeOrEqualsCheck
 IPrincipleCheck -[hidden]down- HollywoodPrincipleCheck
 IPrincipleCheck -[hidden]down- CodeDuplicationCheck
 IPrincipleCheck -[hidden]down- EncapsulationCheck
