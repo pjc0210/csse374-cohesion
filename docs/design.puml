@@ -160,8 +160,14 @@ package Domain {
     }
 
     class SpellCheck {
+      - langTool: JLanguageTool
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
+      - checkWord(String, AbstractInsnNode): List<LintResult>
+      - checkWord(String, String): List<LintResult>
+      - ensureLangTool(): boolean
+      - getLineNumber(AbstractInsnNode): int
+      - getWords(String): List<String>
     }
 
     class MissingAbstractImplCheck {
@@ -182,6 +188,10 @@ package Domain {
     class SwallowedExceptionCheck {
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
+      -checkMethodFroSwallowedException(className: String, method: MethodNode): List<LintResult>
+      - countMeaningfulInstructions(InsnList, int, int): int
+      - isNopOrComment(AbstracctInsnNode): boolean
+      - getLineNumber(AbstractInsnNode): int
     }
 
     ' ============================================================================
