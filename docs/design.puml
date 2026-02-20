@@ -67,10 +67,45 @@ package Domain {
     }
 
     class ThreeLayerPatternCheck {
+      - analyzedClasses: Map<String, ClassInfo>
+
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
+      - findClassesDirectory(ClassNode): String
+      - evaluatePattern(List<Reference>): void
+      - checkLayerViolation(ClassInfo, ClassInfo): String
+      - getReferences(ClassNode): List<References>
+      - analyzeClass(Path): void
+      - analyzeClassNode(classNode): void
+      - extractNameFromDescriptor(String): String
+      - determineLayer(String): Layer
+
     }
 
+    class ClassInfo{
+        name: String
+        layer: Layer
+        node: ClassNode
+        superClasses: List<String>
+        methods: List<MethodNode>
+        vars: List<ClassInfo>
+        + ClassInfo(String, Layer)
+        + addVar(ClassInfo): void
+    }
+
+    enum Layer{
+    PRESENTATION,
+    DOMAIN,
+    DATA,
+    UNKNOWN
+    }
+
+    class Reference{
+     - sourceClass: ClassInfo
+     - targetClass: ClassInfo
+     - source: String
+     + Reference(ClassInfo, ClassInfo, String)
+    }
     ' ============================================================================
     ' PRINCIPLE CHECKS (B)
     ' ============================================================================
@@ -233,6 +268,13 @@ MissingAbstractImplCheck ..|> IStyleCheck
 UnusedParametersCheck ..|> IStyleCheck
 DataTypeCompatibilityCheck ..|> IStyleCheck
 SwallowedExceptionCheck ..|> IStyleCheck
+
+ThreeLayerPatternCheck --> ClassInfo
+ThreeLayerPatternCheck ...> Reference
+ClassInfo --> Layer
+ThreeLayerPatternCheck...> Layer
+
+
 
 ' ============================================================================
 ' LAYOUT HINTS
