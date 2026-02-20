@@ -55,7 +55,10 @@ public class DataTypeCompatibilityCheck implements IStyleCheck {
 
     private void checkMethods(ClassNode classNode, List<LintResult> lintResults) {
         for (MethodNode method : classNode.methods) {
-            if (method.instructions == null) continue;
+            // Skip constructors and static initializers
+            if (method.name.equals("<init>") || method.name.equals("<clinit>") || method.instructions == null) {
+                continue;
+            }
 
             Type methodType = Type.getMethodType(method.desc);
             Type returnType = methodType.getReturnType();
@@ -64,6 +67,9 @@ public class DataTypeCompatibilityCheck implements IStyleCheck {
                 // Check method calls
                 if (insn instanceof MethodInsnNode) {
                     MethodInsnNode methodInsn = (MethodInsnNode) insn;
+                    if (methodInsn.name.equals("<init>") || methodInsn.name.equals("<clinit>")) {
+                        continue;
+                    }
                     MethodNode calledMethod = findMethod(classNode, methodInsn.name, methodInsn.desc);
 
                     if (calledMethod != null && !calledMethod.desc.equals(methodInsn.desc)) {
