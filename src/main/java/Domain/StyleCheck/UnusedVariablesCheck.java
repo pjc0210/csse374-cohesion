@@ -50,8 +50,6 @@ public class UnusedVariablesCheck implements IStyleCheck {
         return false;
     }
 
-
-
     @Override
     public String getName() {
         return "UnusedVariables";
