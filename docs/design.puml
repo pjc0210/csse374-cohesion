@@ -81,8 +81,17 @@ package Domain {
     }
 
     class RedundantInterfaceCheck {
+      - nodeCache: Map<String, ClassNode>
+      - superInterfaceCache: Map<String, Set<String>>
+      - allInterfacesCache: Map<String, Set<String>>
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
+      - interfaceExtends(childInternalName: String, ancestorInternalName: String): boolean
+      - allSuperInterfaces(interfaceInternalName: String): Set<String>
+      - allInterfacesOfType(internalName: String): Set<String>
+      - loadNode(internalName: String): ClassNode
+      - toDot(internal: String): String
+      - simple(internalOrDot: String): String
     }
 
     class StrategyPatternCheck {
@@ -152,8 +161,18 @@ package Domain {
     }
 
     class HollywoodPrincipleCheck {
+      - {static} FRAMEWORK_KEYWORDS: Set<String>
+      - {static} IMPLEMENTATION_KEYWORDS: Set<String>
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
+      - checkMethodCall(classNode: ClassNode, method: MethodNode, methodCall: MethodInsnNode, isLowLevelClass: boolean, results: List<LintResult>): void
+      - checkSuperclassCalls(classNode: ClassNode, results: List<LintResult>): void
+      - isLowLevelImplementation(className: String): boolean
+      - isFrameworkClass(className: String): boolean
+      - isHighLevelClass(className: String): boolean
+      - isTemplateClass(className: String): boolean
+      - isStandardLibrary(className: String): boolean
+      - getSimpleName(fullName: String): String
     }
 
     class CodeDuplicationCheck {
@@ -199,6 +218,11 @@ package Domain {
     class CamelCaseCheck {
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
+      - shouldIgnoreField(field: FieldNode): boolean
+      - shouldIgnoreMethod(method: MethodNode): boolean
+      - isUpperCamelCase(name: String): boolean
+      - isLowerCamelCase(name: String): boolean
+      - simpleName(internalName: String): String
     }
 
     class UnusedVariablesCheck {
@@ -245,6 +269,17 @@ package Domain {
     class UnusedParametersCheck {
       + execute(classNode: ClassNode): List<LintResult>
       + getName(): String
+      - shouldSkip(method: MethodNode): boolean
+      - getParams(method: MethodNode): List<ParamInfo>
+      - computeParamSlots(method: MethodNode): List<Integer>
+      - getUsedSlots(method: MethodNode): Set<Integer>
+      - isLoad(opcode: int): boolean
+    }
+
+    class ParamInfo {
+      - slot: int
+      - name: String
+      + ParamInfo(slot: int, name: String)
     }
 
     class DataTypeCompatibilityCheck {
@@ -379,5 +414,7 @@ IStyleCheck -[hidden]down- GlobalVariableCheck
 IStyleCheck -[hidden]down- CamelCaseCheck
 IStyleCheck -[hidden]down- UnusedVariablesCheck
 IStyleCheck -[hidden]down- SpellCheck
+
+UnusedParametersCheck +-- ParamInfo
 
 @enduml
